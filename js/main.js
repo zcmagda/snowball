@@ -74,10 +74,10 @@ Earth = function(){
 
   var sphereGeometry = new THREE.SphereGeometry( 70, 40, 40 );
 
-  var sphereMaterial = new THREE.MeshStandardMaterial({
-    color: 0xd8d0d1,
-    shading:THREE.FlatShading,
-  });
+  var loader = new THREE.TextureLoader();
+	loader.crossOrigin = '';
+	var texture = loader.load( 'images/snow.png' );
+  var sphereMaterial = new THREE.MeshBasicMaterial( { map: texture } );
 
   this.mesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
   this.mesh.receiveShadow = true;
