@@ -1,12 +1,14 @@
-var scene,
-		camera, fieldOfView, aspectRatio, nearBall, farBall,
-    renderer, container, particles, particleCount, particleSystem;
+var scene, camera,
+		fieldOfView, aspectRatio, nearBall, farBall,
+    renderer, container, particles, particleCount, particleSystem,
+		controls, stats;
 
 var HEIGHT, WIDTH,
     mousePos = { x: 0, y: 0 };
 
 var earth;
 var loader = new THREE.TextureLoader();
+var keyboard = new KeyboardState();
 
 function createScene() {
 
@@ -31,14 +33,25 @@ function createScene() {
 	camera.position.z = 50;
 	camera.position.y = 15;
 
+
+
 	renderer = new THREE.WebGLRenderer({
 		alpha: true,
 	});
 	renderer.setSize(WIDTH, HEIGHT);
 	renderer.shadowMap.enabled = true;
 
+	controls = new THREE.OrbitControls( camera, renderer.domElement );
+
 	container = document.getElementById('world');
 	container.appendChild(renderer.domElement);
+
+	// STATS
+	stats = new Stats();
+	stats.domElement.style.position = 'absolute';
+	stats.domElement.style.bottom = '0px';
+	stats.domElement.style.zIndex = 100;
+	container.appendChild( stats.domElement );
 
 	window.addEventListener('resize', handleWindowResize, false);
 }
@@ -73,8 +86,7 @@ function createLights() {
 
 Earth = function(){
 
-  var sphereGeometry = new THREE.SphereGeometry( 70, 40, 40 );
-
+  var sphereGeometry = new THREE.TetrahedronGeometry(70,4);
 
 	loader.crossOrigin = '';
 	var texture = loader.load( 'images/snow.png' );
@@ -103,32 +115,36 @@ function createEarth(){
 	scene.add(earth.mesh);
 }
 
-function createTree(){
-	var sides=8;
-	var tiers=6;
-	var scalarMultiplier=(Math.random()*(0.25-0.1))+0.05;
-	var midPointVector= new THREE.Vector3();
-	var vertexVector= new THREE.Vector3();
-	var treeGeometry = new THREE.ConeGeometry( 0.5, 1, sides, tiers);
-	var treeMaterial = new THREE.MeshStandardMaterial( { color: 0x33ff33,shading:THREE.FlatShading  } );
-	var offset;
-	midPointVector=treeGeometry.vertices[0].clone();
-	var currentTier=0;
-	var vertexIndex;
+var ball;
 
-	var treeTop = new THREE.Mesh( treeGeometry, treeMaterial );
-	treeTop.castShadow=true;
-	treeTop.receiveShadow=false;
-	treeTop.position.y=0.9;
-	treeTop.rotation.y=(Math.random()*(Math.PI));
-	var treeTrunkGeometry = new THREE.CylinderGeometry( 0.1, 0.1,0.5);
-	var trunkMaterial = new THREE.MeshStandardMaterial( { color: 0x886633,shading:THREE.FlatShading  } );
-	var treeTrunk = new THREE.Mesh( treeTrunkGeometry, trunkMaterial );
-	treeTrunk.position.y=0.25;
-	var tree =new THREE.Object3D();
-	tree.add(treeTrunk);
-	tree.add(treeTop);
-	return tree;
+Ball = function(){
+
+  var ballGeometry = new THREE.SphereGeometry( 3, 10, 10 );
+
+	var texture2 = loader.load( 'images/snow.png' );
+  var ballMaterial = new THREE.MeshBasicMaterial( { map: texture2 } );
+
+  this.mesh = new THREE.Mesh(ballGeometry, ballMaterial);
+  this.mesh.receiveShadow = true;
+}
+
+Ball.prototype.moveGround = function (){
+  rollingGroundSphere = new THREE.Mesh( ball.sphereGeometry, ball.sphereMaterial );
+	rollingGroundSphere.receiveShadow = true;
+	rollingGroundSphere.castShadow=false;
+	rollingGroundSphere.rotation.z=-Math.PI/2;
+	scene.add( rollingGroundSphere );
+	rollingGroundSphere.position.y=-24;
+	rollingGroundSphere.position.z=2;
+
+  ball.mesh.rotation.x += -.005;
+}
+
+function createBall(){
+  ball = new Ball();
+	ball.mesh.position.y = 10;
+	ball.mesh.position.z = 40;
+	scene.add(ball.mesh);
 }
 
 function createSnow(){
@@ -172,11 +188,41 @@ function simulateSnow() {
     particles.verticesNeedUpdate = true;
 };
 
+function update()
+{
+	keyboard.update();
+
+	var moveDistance = 50 * clock.getDelta();
+
+	if ( keyboard.down("left") )
+		ball.translateX( -50 );
+
+	if ( keyboard.down("right") )
+		ball.translateX(  50 );
+
+	if ( keyboard.pressed("A") )
+		ball.translateX( -moveDistance );
+
+	if ( keyboard.pressed("D") )
+		ball.translateX(  moveDistance );
+
+	if ( keyboard.down("R") )
+		ball.material.color = new THREE.Color(0xff0000);
+	if ( keyboard.up("R") )
+		ball.material.color = new THREE.Color(0x0000ff);
+
+	controls.update();
+	stats.update();
+}
+
 function animate(){
   earth.moveGround();
+	ball.moveGround();
 	particleSystem.rotation.y += 0.01;
 	simulateSnow();
-	renderer.render(scene, camera);
+	controls.update();
+	update();
+	render();
 	requestAnimationFrame(animate);
 }
 
@@ -185,7 +231,12 @@ function init(event){
   createLights();
   createEarth();
 	createSnow();
+	createBall();
   animate();
+}
+
+function render() {
+	renderer.render(scene, camera);
 }
 
 window.addEventListener('load', init, false);
