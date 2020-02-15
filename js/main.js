@@ -199,21 +199,16 @@ function update()
 	var moveDistance = 50 * clock.getDelta();
 
 	if ( keyboard.down("left") )
-		ball.translateX( -50 );
+		ball.mesh.translateX( -5 );
 
 	if ( keyboard.down("right") )
-		ball.translateX(  50 );
+		ball.mesh.translateX(  5 );
 
 	if ( keyboard.pressed("A") )
-		ball.translateX( -moveDistance );
+		ball.mesh.translateX( -moveDistance );
 
 	if ( keyboard.pressed("D") )
-		ball.translateX(  moveDistance );
-
-	if ( keyboard.down("R") )
-		ball.material.color = new THREE.Color(0xff0000);
-	if ( keyboard.up("R") )
-		ball.material.color = new THREE.Color(0x0000ff);
+		ball.mesh.translateX(  moveDistance );
 
 	controls.update();
 	stats.update();
