@@ -6,9 +6,10 @@ var scene, camera,
 var HEIGHT, WIDTH,
     mousePos = { x: 0, y: 0 };
 
+
 var earth;
 var loader = new THREE.TextureLoader();
-var keyboard = new KeyboardState();
+
 
 function createScene() {
 
@@ -187,6 +188,9 @@ function simulateSnow() {
     }
     particles.verticesNeedUpdate = true;
 };
+
+var keyboard = new KeyboardState();
+var clock = new THREE.Clock();
 
 function update()
 {
