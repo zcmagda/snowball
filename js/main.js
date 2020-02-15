@@ -1,11 +1,12 @@
 var scene,
 		camera, fieldOfView, aspectRatio, nearBall, farBall,
-    renderer, container;
+    renderer, container, particles, particleCount, particleSystem;
 
 var HEIGHT, WIDTH,
     mousePos = { x: 0, y: 0 };
 
 var earth;
+var loader = new THREE.TextureLoader();
 
 function createScene() {
 
@@ -74,7 +75,7 @@ Earth = function(){
 
   var sphereGeometry = new THREE.SphereGeometry( 70, 40, 40 );
 
-  var loader = new THREE.TextureLoader();
+
 	loader.crossOrigin = '';
 	var texture = loader.load( 'images/snow.png' );
   var sphereMaterial = new THREE.MeshBasicMaterial( { map: texture } );
@@ -130,8 +131,51 @@ function createTree(){
 	return tree;
 }
 
+function createSnow(){
+	particleCount = 15000;
+    var pMaterial = new THREE.PointCloudMaterial({
+      color: 0xFFFFFF,
+      size: 2,
+      map: loader.load(
+         "images/snowflake.png"
+       ),
+       blending: THREE.AdditiveBlending,
+       depthTest: false,
+       transparent: true
+    });
+
+    particles = new THREE.Geometry;
+    for (var i = 0; i < particleCount; i++) {
+        var pX = Math.random()*500 - 250,
+            pY = Math.random()*500 - 250,
+            pZ = Math.random()*500 - 250,
+            particle = new THREE.Vector3(pX, pY, pZ);
+        particle.velocity = {};
+        particle.velocity.y = 0;
+        particles.vertices.push(particle);
+    }
+    particleSystem = new THREE.PointCloud(particles, pMaterial);
+    scene.add(particleSystem);
+}
+
+function simulateSnow() {
+    var pCount = particleCount;
+    while (pCount--) {
+    var particle = particles.vertices[pCount];
+    if (particle.y < -200) {
+      particle.y = 200;
+      particle.velocity.y = 0;
+    }
+    particle.velocity.y -= Math.random() * .02;
+    particle.y += particle.velocity.y;
+    }
+    particles.verticesNeedUpdate = true;
+};
+
 function animate(){
   earth.moveGround();
+	particleSystem.rotation.y += 0.01;
+	simulateSnow();
 	renderer.render(scene, camera);
 	requestAnimationFrame(animate);
 }
@@ -140,6 +184,7 @@ function init(event){
   createScene();
   createLights();
   createEarth();
+	createSnow();
   animate();
 }
 
